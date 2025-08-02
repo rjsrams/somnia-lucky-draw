@@ -1,33 +1,13 @@
-Somnia Lucky Draw
+# Sample Hardhat Project
 
-Web3 dApp untuk Somnia Hackathon – mini-game onchain berbasis smart contract, GameCoin, dan prediksi angka.
+This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
 
----
+Try running some of the following tasks:
 
-Getting Started
-
-This is a Next.js project bootstrapped with create-next-app.
-
-To run the development server:
-
-npm run dev
-# or
-yarn dev
-
-Open http://localhost:3000 with your browser.
-
-Features
-
-- Smart contract interaction with GameCoin & LuckyNumber
-- Wallet connect via MetaMask
-- Cooldown refill logic
-
-Learn More
-
-- Next.js Documentation: https://nextjs.org/docs
-- Smart Contract Code: ../contracts
-
-Deployment
-
-You can deploy to Vercel (https://vercel.com) or your preferred Web3-enabled host.
-
+```shell
+npx hardhat help
+npx hardhat test
+REPORT_GAS=true npx hardhat test
+npx hardhat node
+npx hardhat ignition deploy ./ignition/modules/Lock.js
+```
