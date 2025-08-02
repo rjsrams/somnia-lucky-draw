@@ -1,115 +1,179 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Head from "next/head";
+import { useState, useEffect } from "react";
+import { playLuckyNumber, getUserStatus, getCooldownLeft } from "../lib/contract";
+import { connectWallet } from "../lib/wallet";
 
 export default function Home() {
+  const [wallet, setWallet] = useState<string | null>(null);
+  const [guess, setGuess] = useState("");
+  const [result, setResult] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const [gameCoin, setGameCoin] = useState<number>(0);
+  const [points, setPoints] = useState<number>(0);
+  const [cooldown, setCooldown] = useState(0);
+  const [cooldownText, setCooldownText] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (wallet) {
+      fetchStatus();
+    }
+  }, [wallet]);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const interval = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setCooldownText("");
+            return 0;
+          }
+          const mins = Math.floor((prev - 1) / 60);
+          const secs = (prev - 1) % 60;
+          setCooldownText(`${mins}m ${secs}s`);
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [cooldown]);
+
+  const fetchStatus = async () => {
+    const { gameCoin, points } = await getUserStatus(wallet!);
+    const cooldownLeft = await getCooldownLeft();
+    setGameCoin(gameCoin);
+    setPoints(points);
+    setCooldown(cooldownLeft);
+  };
+
+  const handleConnect = async () => {
+    try {
+      const addr = await connectWallet();
+      setWallet(addr);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleGuess = async () => {
+    const num = parseInt(guess);
+    if (isNaN(num) || num < 1 || num > 3) {
+      setResult("Please enter a number between 1 and 3.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await playLuckyNumber(num);
+      setResult(res.success ? "Correct Guess 🎉 (+5 pts)" : "Wrong Guess 😢 (+1 pt)");
+      setHistory((prev) => [
+        `Guess: ${num} → ${res.success ? "Correct (+5)" : "Wrong (+1)"}`,
+        ...prev,
+      ]);
+      await fetchStatus();
+    } catch (e: any) {
+      setResult(e.message || "Error occurred.");
+    } finally {
+      setLoading(false);
+      setGuess("");
+    }
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    setResult(null);
+  };
+
+  const isConnected = Boolean(wallet);
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <>
+      <Head>
+        <title>Lucky Number Game</title>
+      </Head>
+      <main
+        className={`min-h-screen flex flex-col items-center justify-center p-4 text-white ${
+          isConnected
+            ? "bg-gradient-to-br from-blue-800 via-purple-700 to-black"
+            : "bg-pink-400"
+        }`}
+      >
+        <img
+          src="/somnia-logo.png"
+          alt="Somnia Logo"
+          className="w-24 h-24 mb-4 rounded-full shadow-lg"
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <h1 className="text-4xl font-bold mb-4">🎯 Lucky on Somnia</h1>
+
+        <button
+          onClick={wallet ? () => setWallet(null) : handleConnect}
+          className={`mb-4 text-sm font-semibold px-4 py-2 rounded transition ${
+            wallet
+              ? "bg-yellow-400 text-black hover:bg-yellow-300"
+              : "bg-white text-gray-800 hover:bg-gray-100"
+          }`}
+        >
+          {wallet
+            ? `Disconnect (${wallet.slice(0, 6)}...${wallet.slice(-4)})`
+            : "Connect Wallet"}
+        </button>
+
+        {isConnected && (
+          <div className="mb-4 font-semibold bg-blue-600 bg-opacity-30 px-4 py-2 rounded shadow">
+            🎮 GameCoin: {gameCoin} &nbsp; | &nbsp; ⭐ Points: {points}
+          </div>
+        )}
+
+        {cooldown > 0 && (
+          <div className="text-yellow-300 font-medium mb-2">
+            ⏳ Cooldown: {cooldownText || `${Math.floor(cooldown / 60)}m ${cooldown % 60}s`}
+          </div>
+        )}
+
+        <input
+          type="number"
+          min={1}
+          max={3}
+          value={guess}
+          onChange={(e) => setGuess(e.target.value)}
+          placeholder="Enter a number between 1 and 3"
+          className="p-2 rounded w-72 mb-3 text-white placeholder-white bg-black bg-opacity-30 border-2 border-purple-400 focus:outline-none focus:ring focus:ring-purple-300"
+        />
+
+        <button
+          onClick={handleGuess}
+          className={`text-white px-4 py-2 rounded font-semibold ${
+            loading || cooldown > 0
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
+          disabled={loading || cooldown > 0}
+        >
+          {loading ? "Submitting..." : "Submit Guess"}
+        </button>
+
+        {result && <p className="mt-4 text-lg font-medium">{result}</p>}
+
+        <div className="mt-8 w-full max-w-md bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+          <h2 className="text-xl font-semibold mb-2 text-black">Guess History:</h2>
+          <button
+            onClick={clearHistory}
+            className="text-sm bg-red-600 text-white px-3 py-1 rounded mb-2 hover:bg-red-700 transition"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Clear History
+          </button>
+          <ul className="list-disc list-inside space-y-1">
+            {history.map((entry, i) => (
+              <li key={i} className="text-yellow-600 font-medium">
+                {entry}
+              </li>
+            ))}
+          </ul>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    </>
   );
 }
+
