@@ -3,6 +3,9 @@ import { LUCKY_NUMBER_ADDRESS, GAMECOIN_ADDRESS } from "../constants/addresses";
 import LuckyNumberJson from "../constants/LuckyNumber.json";
 import GameCoinJson from "../constants/GameCoin.json";
 
+export const CONTRACT_ADDRESS = LUCKY_NUMBER_ADDRESS;
+export const ABI = LuckyNumberJson.abi;
+
 const LuckyNumberABI = LuckyNumberJson.abi;
 const GameCoinABI = GameCoinJson.abi;
 
@@ -58,7 +61,10 @@ export async function playLuckyNumber(guess: number): Promise<{
         return null;
       }
     })
-    .find((parsed): parsed is ReturnType<typeof luckyNumberContract.interface.parseLog> => parsed !== null && parsed.name === "Played");
+    .find(
+      (parsed): parsed is ReturnType<typeof luckyNumberContract.interface.parseLog> =>
+        parsed !== null && parsed.name === "Played"
+    );
 
   if (!event) throw new Error("No Played event found");
 
