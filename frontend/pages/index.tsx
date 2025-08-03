@@ -33,7 +33,7 @@ export default function Home() {
       const cooldownLeft = await getCooldownLeft(wallet);
       setGameCoin(Number(gameCoin));
       setPoints(Number(points));
-      setCooldown(cooldownLeft);
+      setCooldown(Number(cooldownLeft));
     } catch (err) {
       console.error('Failed to fetch status:', err);
     }
