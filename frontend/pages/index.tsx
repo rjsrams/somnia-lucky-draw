@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useCallback, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { writeContract } from '@wagmi/core';
