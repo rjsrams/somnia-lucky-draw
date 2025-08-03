@@ -3,7 +3,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { writeContract } from 'viem/actions';
 import { wagmiConfig } from '@/lib/wagmi';
 import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
-import { walletClient, getUserStatus, getCooldownLeft } from '@/lib/contract';
+import { walletClient, getUserStatus, getCooldownLeft } from '@/lib/wallet';
 
 export default function Home() {
   const [wallet, setWallet] = useState('');
