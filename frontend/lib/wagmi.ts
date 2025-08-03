@@ -1,7 +1,7 @@
-import { createConfig, configureChains } from 'wagmi'
-import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
+import { createConfig, http } from 'wagmi';
+import { Chain } from 'viem';
 
-const somniaTestnet = {
+const somniaTestnet: Chain = {
   id: 50312,
   name: 'Somnia Testnet',
   nativeCurrency: { name: 'Somnia Token', symbol: 'STT', decimals: 18 },
@@ -20,15 +20,13 @@ const somniaTestnet = {
       url: 'https://somnia-testnet.socialscan.io/',
     },
   },
-}
-
-export const { chains, publicClient } = configureChains(
-  [somniaTestnet],
-  [jsonRpcProvider({ rpc: () => ({ http: 'https://dream-rpc.somnia.network/' }) })]
-)
+};
 
 export const wagmiConfig = createConfig({
-  autoConnect: true,
-  publicClient,
-})
+  chains: [somniaTestnet],
+  transports: {
+    [somniaTestnet.id]: http('https://dream-rpc.somnia.network/'),
+  },
+  ssr: true,
+});
 
