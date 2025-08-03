@@ -1,6 +1,8 @@
 import { createWalletClient, custom } from 'viem';
 import { getAccount } from '@wagmi/core';
 import { wagmiConfig } from './wagmi';
+import { CONTRACT_ADDRESS, ABI } from './contract';
+import { publicClient } from './wagmi';
 
 export const walletClient = createWalletClient({
   account: getAccount(wagmiConfig).address,
@@ -29,5 +31,23 @@ export async function connectWallet(): Promise<string> {
   })) as string[];
 
   return accounts[0];
+}
+
+export async function getUserStatus(walletAddress: string): Promise<boolean> {
+  return await publicClient.readContract({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    functionName: 'hasUserPlayed',
+    args: [walletAddress],
+  });
+}
+
+export async function getCooldownLeft(walletAddress: string): Promise<bigint> {
+  return await publicClient.readContract({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    functionName: 'getCooldownLeft',
+    args: [walletAddress],
+  });
 }
 
