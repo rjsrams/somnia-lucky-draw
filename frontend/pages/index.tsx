@@ -4,7 +4,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { writeContract } from 'viem/actions';
 import { wagmiConfig } from '@/lib/wagmi';
-import { CONTRACT_ADDRESS, ABI, publicClient, walletClient } from '@/lib/contract';
+import { CONTRACT_ADDRESS, ABI, walletClient } from '@/lib/contract';
 import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
 
 export default function Home() {
