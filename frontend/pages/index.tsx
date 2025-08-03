@@ -14,19 +14,27 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const fetchWallet = useCallback(async () => {
-    const accounts = await walletClient.getAddresses();
-    if (accounts.length > 0) {
-      setWallet(accounts[0]);
+    try {
+      const accounts = await walletClient.getAddresses();
+      if (accounts.length > 0) {
+        setWallet(accounts[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch wallet:', err);
     }
   }, []);
 
   const fetchStatus = useCallback(async () => {
     if (!wallet) return;
-    const { gameCoin, points } = await getUserStatus(wallet);
-    const cooldownLeft = await getCooldownLeft(wallet);
-    setGameCoin(Number(gameCoin));
-    setPoints(Number(points));
-    setCooldown(cooldownLeft);
+    try {
+      const { gameCoin, points } = await getUserStatus(wallet);
+      const cooldownLeft = await getCooldownLeft(wallet);
+      setGameCoin(Number(gameCoin));
+      setPoints(Number(points));
+      setCooldown(cooldownLeft);
+    } catch (err) {
+      console.error('Failed to fetch status:', err);
+    }
   }, [wallet]);
 
   useEffect(() => {
@@ -86,4 +94,3 @@ export default function Home() {
     </main>
   );
 }
-
