@@ -1,6 +1,7 @@
 import { createWalletClient, custom } from 'viem';
 import { getAccount } from '@wagmi/core';
 import { wagmiConfig } from './wagmi';
+import { walletClient, getUserStatus, getCooldownLeft } from '@/lib/wallet';
 
 export const walletClient = createWalletClient({
   account: getAccount(wagmiConfig).address,
