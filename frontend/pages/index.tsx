@@ -2,12 +2,10 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { readContract, writeContract } from 'viem/actions';
-import { publicClient, walletClient } from '@/lib/contract';
+import { writeContract } from 'viem/actions';
 import { wagmiConfig } from '@/lib/wagmi';
-import { parseAbi } from 'viem';
-import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
-import { getGameStatus, getUserStatus, getCooldownLeft } from '@/lib/wallet';
+import { CONTRACT_ADDRESS, ABI, publicClient, walletClient } from '@/lib/contract';
+import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
 
 export default function Home() {
   const [wallet, setWallet] = useState('');
@@ -19,13 +17,15 @@ export default function Home() {
 
   const fetchWallet = useCallback(async () => {
     const accounts = await walletClient.getAddresses();
-    setWallet(accounts[0]);
+    if (accounts.length > 0) {
+      setWallet(accounts[0]);
+    }
   }, []);
 
   const fetchStatus = useCallback(async () => {
     if (!wallet) return;
     const { gameCoin, points } = await getUserStatus(wallet);
-    const cooldownLeft = await getCooldownLeft();
+    const cooldownLeft = await getCooldownLeft(wallet);
     setGameCoin(Number(gameCoin));
     setPoints(Number(points));
     setCooldown(cooldownLeft);
