@@ -33,13 +33,16 @@ export async function connectWallet(): Promise<string> {
   return accounts[0];
 }
 
-export async function getUserStatus(walletAddress: string): Promise<boolean> {
-  return await publicClient.readContract({
+// ✅ FIXED: Now returns gameCoin and points
+export async function getUserStatus(walletAddress: string): Promise<{ gameCoin: bigint; points: bigint }> {
+  const [gameCoin, points] = await publicClient.readContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
-    functionName: 'hasUserPlayed',
+    functionName: 'getUserStatus',
     args: [walletAddress],
-  }) as boolean;
+  }) as [bigint, bigint];
+
+  return { gameCoin, points };
 }
 
 export async function getCooldownLeft(walletAddress: string): Promise<bigint> {
