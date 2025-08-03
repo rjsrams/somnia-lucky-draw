@@ -39,7 +39,7 @@ export async function getUserStatus(walletAddress: string): Promise<boolean> {
     abi: ABI,
     functionName: 'hasUserPlayed',
     args: [walletAddress],
-  });
+  }) as boolean;
 }
 
 export async function getCooldownLeft(walletAddress: string): Promise<bigint> {
@@ -48,6 +48,6 @@ export async function getCooldownLeft(walletAddress: string): Promise<bigint> {
     abi: ABI,
     functionName: 'getCooldownLeft',
     args: [walletAddress],
-  });
+  }) as bigint;
 }
 
