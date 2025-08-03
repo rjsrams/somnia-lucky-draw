@@ -1,5 +1,6 @@
 import Head from "next/head";
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
 import { playLuckyNumber, getUserStatus, getCooldownLeft } from "../lib/contract";
 import { connectWallet } from "../lib/wallet";
 
@@ -14,11 +15,20 @@ export default function Home() {
   const [cooldownText, setCooldownText] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const fetchStatus = useCallback(async () => {
+    if (!wallet) return;
+    const { gameCoin, points } = await getUserStatus(wallet);
+    const cooldownLeft = await getCooldownLeft();
+    setGameCoin(gameCoin);
+    setPoints(points);
+    setCooldown(cooldownLeft);
+  }, [wallet]);
+
   useEffect(() => {
     if (wallet) {
       fetchStatus();
     }
-  }, [wallet]);
+  }, [wallet, fetchStatus]);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -40,20 +50,16 @@ export default function Home() {
     }
   }, [cooldown]);
 
-  const fetchStatus = async () => {
-    const { gameCoin, points } = await getUserStatus(wallet!);
-    const cooldownLeft = await getCooldownLeft();
-    setGameCoin(gameCoin);
-    setPoints(points);
-    setCooldown(cooldownLeft);
-  };
-
   const handleConnect = async () => {
     try {
       const addr = await connectWallet();
       setWallet(addr);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert("Unknown error occurred.");
+      }
     }
   };
 
@@ -73,8 +79,12 @@ export default function Home() {
         ...prev,
       ]);
       await fetchStatus();
-    } catch (e: any) {
-      setResult(e.message || "Error occurred.");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setResult(e.message);
+      } else {
+        setResult("Unknown error occurred.");
+      }
     } finally {
       setLoading(false);
       setGuess("");
@@ -100,10 +110,12 @@ export default function Home() {
             : "bg-pink-400"
         }`}
       >
-        <img
+        <Image
           src="/somnia-logo.png"
           alt="Somnia Logo"
-          className="w-24 h-24 mb-4 rounded-full shadow-lg"
+          width={96}
+          height={96}
+          className="mb-4 rounded-full shadow-lg"
         />
         <h1 className="text-4xl font-bold mb-4">🎯 Lucky on Somnia</h1>
 
@@ -137,7 +149,7 @@ export default function Home() {
           min={1}
           max={3}
           value={guess}
-          onChange={(e) => setGuess(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGuess(e.target.value)}
           placeholder="Enter a number between 1 and 3"
           className="p-2 rounded w-72 mb-3 text-white placeholder-white bg-black bg-opacity-30 border-2 border-purple-400 focus:outline-none focus:ring focus:ring-purple-300"
         />

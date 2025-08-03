@@ -1,12 +1,23 @@
-import { createWalletClient, customProvider } from "viem";
-import { mainnet } from "viem/chains";
+type EthereumProvider = {
+  isMetaMask?: boolean;
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+};
 
-export async function connectWallet() {
+declare global {
+  interface Window {
+    ethereum?: EthereumProvider;
+  }
+}
+
+export async function connectWallet(): Promise<string> {
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("MetaMask not detected");
   }
 
-  const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
-  return account;
+  const accounts = (await window.ethereum.request({
+    method: "eth_requestAccounts",
+  })) as string[];
+
+  return accounts[0];
 }
 
