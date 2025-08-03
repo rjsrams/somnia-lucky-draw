@@ -1,11 +1,9 @@
-'use client';
-
 import { useEffect, useCallback, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { writeContract } from 'viem/actions';
 import { wagmiConfig } from '@/lib/wagmi';
-import { CONTRACT_ADDRESS, ABI, walletClient } from '@/lib/contract';
-import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
+import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
+import { walletClient, getUserStatus, getCooldownLeft } from '@/lib/wallet';
 
 export default function Home() {
   const [wallet, setWallet] = useState('');
