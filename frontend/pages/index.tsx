@@ -5,7 +5,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { writeContract } from '@wagmi/core';
 import { wagmiConfig } from '@/lib/wagmi';
 import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
-import { walletClient, getUserStatus, getCooldownLeft } from '@/lib/wallet';
+import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
 import { useAccount } from 'wagmi';
 
 export default function Home() {
