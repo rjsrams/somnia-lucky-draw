@@ -1,3 +1,13 @@
+import { createWalletClient, custom } from 'viem';
+import { getAccount } from '@wagmi/core';
+import { wagmiConfig } from './wagmi';
+
+export const walletClient = createWalletClient({
+  account: getAccount(wagmiConfig).address,
+  chain: wagmiConfig.chains[0],
+  transport: custom(window.ethereum!),
+});
+
 type EthereumProvider = {
   isMetaMask?: boolean;
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
