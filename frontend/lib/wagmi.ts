@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { Chain } from 'viem';
+import { Chain, createPublicClient } from 'viem';
 
 const somniaTestnet: Chain = {
   id: 50312,
@@ -28,5 +28,10 @@ export const wagmiConfig = createConfig({
     [somniaTestnet.id]: http('https://dream-rpc.somnia.network/'),
   },
   ssr: true,
+});
+
+export const publicClient = createPublicClient({
+  chain: somniaTestnet,
+  transport: http('https://dream-rpc.somnia.network/'),
 });
 
