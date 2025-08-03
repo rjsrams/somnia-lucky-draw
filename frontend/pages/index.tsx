@@ -6,46 +6,32 @@ import { writeContract } from '@wagmi/core';
 import { wagmiConfig } from '@/lib/wagmi';
 import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
 import { walletClient, getUserStatus, getCooldownLeft } from '@/lib/wallet';
+import { useAccount } from 'wagmi';
 
 export default function Home() {
-  const [wallet, setWallet] = useState('');
+  const { address } = useAccount();
   const [status, setStatus] = useState('');
   const [gameCoin, setGameCoin] = useState(0);
   const [points, setPoints] = useState(0);
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const fetchWallet = useCallback(async () => {
-    try {
-      const accounts = await walletClient.getAddresses();
-      if (accounts.length > 0) {
-        setWallet(accounts[0]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch wallet:', err);
-    }
-  }, []);
-
   const fetchStatus = useCallback(async () => {
-    if (!wallet) return;
+    if (!address) return;
     try {
-      const { gameCoin, points } = await getUserStatus(wallet);
-      const cooldownLeft = await getCooldownLeft(wallet);
+      const { gameCoin, points } = await getUserStatus(address);
+      const cooldownLeft = await getCooldownLeft(address);
       setGameCoin(Number(gameCoin));
       setPoints(Number(points));
       setCooldown(Number(cooldownLeft));
     } catch (err) {
       console.error('Failed to fetch status:', err);
     }
-  }, [wallet]);
+  }, [address]);
 
   useEffect(() => {
-    fetchWallet();
-  }, [fetchWallet]);
-
-  useEffect(() => {
-    if (wallet) fetchStatus();
-  }, [wallet, fetchStatus]);
+    if (address) fetchStatus();
+  }, [address, fetchStatus]);
 
   const play = async () => {
     try {
@@ -55,7 +41,7 @@ export default function Home() {
         abi: ABI,
         address: CONTRACT_ADDRESS,
         functionName: 'playGame',
-        account: wallet,
+        account: address,
       });
       setStatus('Success! 🎉');
     } catch (error) {
@@ -72,9 +58,9 @@ export default function Home() {
       <ConnectButton />
       <div className="mt-8 text-center">
         <h1 className="text-2xl font-bold mb-2">🎲 Somnia Lucky Draw</h1>
-        {wallet && (
+        {address && (
           <>
-            <p className="mb-2">Wallet: {wallet}</p>
+            <p className="mb-2">Wallet: {address}</p>
             <p className="mb-2">Game Coin: {gameCoin}</p>
             <p className="mb-2">Points: {points}</p>
             <p className="mb-4">
