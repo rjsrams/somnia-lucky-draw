@@ -2,14 +2,13 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { writeContract } from '@wagmi/core';
-import { wagmiConfig } from '@/lib/wagmi';
 import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
 import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
-import { useAccount } from 'wagmi';
+import { useAccount, useWriteContract } from 'wagmi';
 
 export default function Home() {
   const { address } = useAccount();
+  const { writeContractAsync } = useWriteContract();
   const [status, setStatus] = useState('');
   const [gameCoin, setGameCoin] = useState(0);
   const [points, setPoints] = useState(0);
@@ -37,7 +36,7 @@ export default function Home() {
     try {
       setLoading(true);
       setStatus('Playing...');
-      await writeContract(wagmiConfig, {
+      await writeContractAsync({
         abi: ABI,
         address: CONTRACT_ADDRESS,
         functionName: 'playGame',
