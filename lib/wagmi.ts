@@ -33,4 +33,8 @@ export const wagmiConfig = createConfig({
 })
 
 export const somniaChains = [somniaTestnet];
+export const wagmiConfig = createConfig({
+  autoConnect: true,
+  publicClient,
+})
 
