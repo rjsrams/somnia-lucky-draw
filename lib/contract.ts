@@ -2,11 +2,15 @@ import { ethers } from "ethers";
 import { LUCKY_NUMBER_ADDRESS, GAMECOIN_ADDRESS } from "../constants/addresses";
 import LuckyNumberJson from "../constants/LuckyNumber.json";
 import GameCoinJson from "../constants/GameCoin.json";
+import { EthereumProvider } from '@metamask/providers';
 
 const LuckyNumberABI = LuckyNumberJson.abi;
 const GameCoinABI = GameCoinJson.abi;
 
-declare let window: any;
+interface EthereumWindow extends Window {
+  ethereum?: EthereumProvider;
+}
+declare let window: EthereumWindow;
 
 // Debugging
 console.log("Loaded GAMECOIN_ADDRESS:", GAMECOIN_ADDRESS);
