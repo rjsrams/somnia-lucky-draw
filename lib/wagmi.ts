@@ -32,7 +32,13 @@ export const wagmiConfig = createConfig({
   publicClient,
 })
 
-export const somniaChains = [somniaTestnet];
+export const chains = [somniaTestnet];
+
+const { publicClient } = configureChains(
+  chains,
+  [jsonRpcProvider({ rpc: () => ({ http: 'https://dream-rpc.somnia.network/' }) })]
+)
+
 export const wagmiConfig = createConfig({
   autoConnect: true,
   publicClient,

@@ -9,25 +9,24 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@rainbow-me/rainbowkit": "^2.1.0",
-    "@vanilla-extract/sprinkles": "^1.1.2",
-    "@wagmi/core": "^2.18.1",
-    "ethers": "^6.15.0",
-    "next": "15.4.5",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "viem": "^2.33.2",
-    "wagmi": "^2.16.1"
+    "@rainbow-me/rainbowkit": "1.0.2",
+    "@types/node": "20.4.2",
+    "@types/react": "18.2.15",
+    "@types/react-dom": "18.2.7",
+    "ethers": "5.7.2",
+    "next": "14.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "viem": "1.10.1",
+    "wagmi": "1.2.2"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.4.5",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@tailwindcss/postcss": "^4.1.11",
+    "autoprefixer": "^10.4.21",
+    "eslint": "8.48.0",
+    "eslint-config-next": "14.2.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "5.2.2"
   }
 }

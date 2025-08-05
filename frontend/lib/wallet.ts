@@ -1,56 +1,83 @@
-import { createWalletClient, custom } from 'viem';
+import { createWalletClient, custom, WalletClient } from 'viem';
+import { readContract } from '@wagmi/core';
 import { getAccount } from '@wagmi/core';
 import { wagmiConfig } from './wagmi';
 import { CONTRACT_ADDRESS, ABI } from './contract';
-import { publicClient } from './wagmi';
 
-export const walletClient = createWalletClient({
-  account: getAccount(wagmiConfig).address,
-  chain: wagmiConfig.chains[0],
-  transport: custom(window.ethereum!),
-});
-
-type EthereumProvider = {
+interface EthereumProvider {
   isMetaMask?: boolean;
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-};
-
-declare global {
-  interface Window {
-    ethereum?: EthereumProvider;
-  }
+  on?: (...args: unknown[]) => void;
+  removeListener?: (...args: unknown[]) => void;
 }
 
+const ethereum = typeof window !== 'undefined' ? (window.ethereum as EthereumProvider | undefined) : undefined;
+
+const account = getAccount().address;
+
+const somniaChain = {
+  id: 50312,
+  name: 'Somnia Testnet',
+  network: 'somnia-testnet',
+  nativeCurrency: {
+    name: 'Somnia Token',
+    symbol: 'STT',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://dream-rpc.somnia.network'],
+    },
+    public: {
+      http: ['https://dream-rpc.somnia.network'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Shannon Explorer',
+      url: 'https://shannon-explorer.somnia.network',
+    },
+  },
+  testnet: true,
+};
+
+export const walletClient: WalletClient = createWalletClient({
+  account,
+  chain: somniaChain,
+  transport: custom(ethereum!),
+});
+
 export async function connectWallet(): Promise<string> {
-  if (typeof window === "undefined" || !window.ethereum) {
-    throw new Error("MetaMask not detected");
+  if (!ethereum) {
+    throw new Error('MetaMask not detected');
   }
 
-  const accounts = (await window.ethereum.request({
-    method: "eth_requestAccounts",
-  })) as string[];
+  const accounts = await ethereum.request({
+    method: 'eth_requestAccounts',
+  }) as string[];
 
   return accounts[0];
 }
 
-// ✅ FIXED: Now returns gameCoin and points
 export async function getUserStatus(walletAddress: string): Promise<{ gameCoin: bigint; points: bigint }> {
-  const [gameCoin, points] = await publicClient.readContract({
+  const [gameCoin, points] = await readContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
     functionName: 'getUserStatus',
     args: [walletAddress],
+    chainId: 50312,
   }) as [bigint, bigint];
 
   return { gameCoin, points };
 }
 
 export async function getCooldownLeft(walletAddress: string): Promise<bigint> {
-  return await publicClient.readContract({
+  return await readContract({
     address: CONTRACT_ADDRESS,
     abi: ABI,
     functionName: 'getCooldownLeft',
     args: [walletAddress],
+    chainId: 50312,
   }) as bigint;
 }
 

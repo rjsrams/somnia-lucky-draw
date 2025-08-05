@@ -4,16 +4,21 @@ import { useEffect, useCallback, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
 import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useContractWrite } from 'wagmi';
 
 export default function Home() {
   const { address } = useAccount();
-  const { writeContractAsync } = useWriteContract();
   const [status, setStatus] = useState('');
   const [gameCoin, setGameCoin] = useState(0);
   const [points, setPoints] = useState(0);
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  const { write } = useContractWrite({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    functionName: 'playGame',
+  });
 
   const fetchStatus = useCallback(async () => {
     if (!address) return;
@@ -36,12 +41,7 @@ export default function Home() {
     try {
       setLoading(true);
       setStatus('Playing...');
-      await writeContractAsync({
-        abi: ABI,
-        address: CONTRACT_ADDRESS,
-        functionName: 'playGame',
-        account: address,
-      });
+      await write?.();
       setStatus('Success! 🎉');
     } catch (error) {
       console.error(error);
