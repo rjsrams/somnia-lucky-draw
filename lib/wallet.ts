@@ -1,22 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createWalletClient, custom, WalletClient } from 'viem';
 import { getAccount, readContract } from '@wagmi/core';
-import { wagmiConfig } from './wagmi';
 import { CONTRACT_ADDRESS, ABI } from './contract';
-
-interface EthereumProvider {
-  isMetaMask?: boolean;
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-  on?: (...args: unknown[]) => void;
-  removeListener?: (...args: unknown[]) => void;
-}
-
-const ethereum =
-  typeof window !== 'undefined'
-    ? (window.ethereum as EthereumProvider | undefined)
-    : undefined;
-
-const account = getAccount().address;
 
 const somniaChain = {
   id: 50312,
@@ -44,18 +29,30 @@ const somniaChain = {
   testnet: true,
 };
 
-export const walletClient: WalletClient = createWalletClient({
-  account,
-  chain: somniaChain,
-  transport: custom(ethereum!),
-});
+export function getWalletClient(account: `0x${string}`): WalletClient | null {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.ethereum === 'undefined'
+  ) {
+    return null;
+  }
+
+  return createWalletClient({
+    account,
+    chain: somniaChain,
+    transport: custom(window.ethereum as any),
+  });
+}
 
 export async function connectWallet(): Promise<string> {
-  if (!ethereum) {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.ethereum === 'undefined'
+  ) {
     throw new Error('MetaMask not detected');
   }
 
-  const accounts = (await ethereum.request({
+  const accounts = (await (window.ethereum as any).request({
     method: 'eth_requestAccounts',
   })) as string[];
 
@@ -92,17 +89,22 @@ export function useWallet(): {
   connectWallet: () => Promise<string>;
 } {
   const [client, setClient] = useState<WalletClient | null>(null);
+  const account = getAccount().address as `0x${string}` | undefined;
 
   useEffect(() => {
-    if (ethereum && account) {
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.ethereum !== 'undefined' &&
+      account
+    ) {
       const client = createWalletClient({
         account,
         chain: somniaChain,
-        transport: custom(ethereum),
+        transport: custom(window.ethereum as any),
       });
       setClient(client);
     }
-  }, []);
+  }, [account]);
 
   return {
     client,
