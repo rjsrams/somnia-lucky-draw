@@ -2,22 +2,26 @@ import { ethers } from "ethers";
 import { LUCKY_NUMBER_ADDRESS, GAMECOIN_ADDRESS } from "../constants/addresses";
 import LuckyNumberJson from "../constants/LuckyNumber.json";
 import GameCoinJson from "../constants/GameCoin.json";
-import { EthereumProvider } from '@metamask/providers';
 
 const LuckyNumberABI = LuckyNumberJson.abi;
 const GameCoinABI = GameCoinJson.abi;
 
-interface EthereumWindow extends Window {
-  ethereum?: EthereumProvider;
-}
-declare let window: EthereumWindow;
+export const CONTRACT_ADDRESS = LUCKY_NUMBER_ADDRESS;
+export const ABI = LuckyNumberABI;
 
-// Debugging
-console.log("Loaded GAMECOIN_ADDRESS:", GAMECOIN_ADDRESS);
-console.log("Loaded LUCKY_NUMBER_ADDRESS:", LUCKY_NUMBER_ADDRESS);
+declare global {
+  interface Window {
+    ethereum?: ethers.providers.ExternalProvider;
+  }
+}
+
+function getProvider(): ethers.providers.Web3Provider {
+  if (!window.ethereum) throw new Error("No crypto wallet found");
+  return new ethers.providers.Web3Provider(window.ethereum);
+}
 
 function checkAddress(address: string | undefined | null, name: string) {
-  if (!address || address === ethers.ZeroAddress) {
+  if (!address || address === ethers.constants.AddressZero) {
     throw new Error(`${name} address is invalid: ${address}`);
   }
 }
@@ -27,18 +31,27 @@ export async function playLuckyNumber(guess: number): Promise<{
   luckyNumber: number;
   pointsEarned: number;
 }> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
-
   checkAddress(GAMECOIN_ADDRESS, "GameCoin");
   checkAddress(LUCKY_NUMBER_ADDRESS, "LuckyNumber");
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+  const provider = getProvider();
+  const signer = provider.getSigner();
 
-  const gameCoinContract = new ethers.Contract(GAMECOIN_ADDRESS!, GameCoinABI, signer);
-  const luckyNumberContract = new ethers.Contract(LUCKY_NUMBER_ADDRESS!, LuckyNumberABI, signer);
+  const gameCoinContract = new ethers.Contract(
+    GAMECOIN_ADDRESS!,
+    GameCoinABI,
+    signer
+  );
+  const luckyNumberContract = new ethers.Contract(
+    LUCKY_NUMBER_ADDRESS!,
+    LuckyNumberABI,
+    signer
+  );
 
-  const approveTx = await gameCoinContract.approve(LUCKY_NUMBER_ADDRESS, ethers.parseEther("3"));
+  const approveTx = await gameCoinContract.approve(
+    LUCKY_NUMBER_ADDRESS,
+    ethers.utils.parseEther("3")
+  );
   await approveTx.wait();
 
   const playTx = await luckyNumberContract.play(guess);
@@ -52,7 +65,10 @@ export async function playLuckyNumber(guess: number): Promise<{
         return null;
       }
     })
-    .find((parsed) => parsed && parsed.name === "Played");
+    .find(
+      (parsed: any): parsed is ethers.utils.LogDescription =>
+        parsed !== null && parsed.name === "Played"
+    );
 
   if (!event) throw new Error("No Played event found");
 
@@ -64,12 +80,14 @@ export async function playLuckyNumber(guess: number): Promise<{
 }
 
 export async function refillGameCoin(): Promise<string> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
+  const provider = getProvider();
+  const signer = provider.getSigner();
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-
-  const luckyNumberContract = new ethers.Contract(LUCKY_NUMBER_ADDRESS!, LuckyNumberABI, signer);
+  const luckyNumberContract = new ethers.Contract(
+    LUCKY_NUMBER_ADDRESS!,
+    LuckyNumberABI,
+    signer
+  );
 
   const tx = await luckyNumberContract.refill();
   await tx.wait();
@@ -78,80 +96,84 @@ export async function refillGameCoin(): Promise<string> {
 }
 
 export async function getGameCoinBalance(): Promise<string> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+  const provider = getProvider();
+  const signer = provider.getSigner();
   const address = await signer.getAddress();
 
-  const gameCoinContract = new ethers.Contract(GAMECOIN_ADDRESS!, GameCoinABI, provider);
-  const balance = await gameCoinContract.balanceOf(address);
-  return ethers.formatEther(balance);
+  const gameCoinContract = new ethers.Contract(
+    GAMECOIN_ADDRESS!,
+    GameCoinABI,
+    provider
+  );
+  const balance: ethers.BigNumber = await gameCoinContract.balanceOf(address);
+  return ethers.utils.formatEther(balance);
 }
 
 export async function getUserPoints(): Promise<number> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+  const provider = getProvider();
+  const signer = provider.getSigner();
   const address = await signer.getAddress();
 
-  const luckyNumberContract = new ethers.Contract(LUCKY_NUMBER_ADDRESS!, LuckyNumberABI, provider);
-  const [, points] = await luckyNumberContract.getStatus(address);
-  return Number(points);
+  const luckyNumberContract = new ethers.Contract(
+    LUCKY_NUMBER_ADDRESS!,
+    LuckyNumberABI,
+    provider
+  );
+  const [, points]: [ethers.BigNumber, ethers.BigNumber] =
+    await luckyNumberContract.getStatus(address);
+  return points.toNumber();
 }
 
 export async function getRefillCooldown(): Promise<number> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+  const provider = getProvider();
+  const signer = provider.getSigner();
   const address = await signer.getAddress();
 
-  const luckyNumberContract = new ethers.Contract(LUCKY_NUMBER_ADDRESS!, LuckyNumberABI, provider);
-  const [lastRefill] = await luckyNumberContract.getStatus(address);
+  const luckyNumberContract = new ethers.Contract(
+    LUCKY_NUMBER_ADDRESS!,
+    LuckyNumberABI,
+    provider
+  );
+  const [lastRefill]: [ethers.BigNumber, ethers.BigNumber] =
+    await luckyNumberContract.getStatus(address);
 
   const now = Math.floor(Date.now() / 1000);
   const cooldown = 3600;
 
-  return Math.max(0, Number(lastRefill) + cooldown - now);
+  return Math.max(0, lastRefill.toNumber() + cooldown - now);
 }
 
 export async function getCooldownLeft(): Promise<number> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const address = await signer.getAddress();
-
-  const luckyNumberContract = new ethers.Contract(LUCKY_NUMBER_ADDRESS!, LuckyNumberABI, provider);
-  const [lastRefill] = await luckyNumberContract.getStatus(address);
-
-  const now = Math.floor(Date.now() / 1000);
-  const cooldown = 3600;
-
-  return Math.max(0, Number(lastRefill) + cooldown - now);
+  return getRefillCooldown();
 }
 
 export async function getUserStatus(wallet: string): Promise<{
   gameCoin: string;
   points: number;
 }> {
-  if (!window.ethereum) throw new Error("No crypto wallet found");
-
   checkAddress(GAMECOIN_ADDRESS, "GameCoin");
   checkAddress(LUCKY_NUMBER_ADDRESS, "LuckyNumber");
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const gameCoinContract = new ethers.Contract(GAMECOIN_ADDRESS!, GameCoinABI, provider);
-  const luckyNumberContract = new ethers.Contract(LUCKY_NUMBER_ADDRESS!, LuckyNumberABI, provider);
+  const provider = getProvider();
 
-  const balance = await gameCoinContract.balanceOf(wallet);
-  const [, points] = await luckyNumberContract.getStatus(wallet);
+  const gameCoinContract = new ethers.Contract(
+    GAMECOIN_ADDRESS!,
+    GameCoinABI,
+    provider
+  );
+  const luckyNumberContract = new ethers.Contract(
+    LUCKY_NUMBER_ADDRESS!,
+    LuckyNumberABI,
+    provider
+  );
+
+  const balance: ethers.BigNumber = await gameCoinContract.balanceOf(wallet);
+  const [, points]: [ethers.BigNumber, ethers.BigNumber] =
+    await luckyNumberContract.getStatus(wallet);
 
   return {
-    gameCoin: ethers.formatEther(balance),
-    points: Number(points),
+    gameCoin: ethers.utils.formatEther(balance),
+    points: points.toNumber(),
   };
 }
 

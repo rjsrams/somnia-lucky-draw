@@ -1,83 +1,98 @@
-"use client";
+'use client';
 
-import { useEffect, useCallback, useState } from 'react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { CONTRACT_ADDRESS, ABI } from '@/lib/contract';
-import { getUserStatus, getCooldownLeft } from '@/lib/wallet';
-import { useAccount, useContractWrite } from 'wagmi';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useWallet } from "../lib/wallet";
+import { playLuckyNumber } from "../lib/contract";
+
+type PlayResult = {
+  success: boolean;
+};
 
 export default function Home() {
-  const { address } = useAccount();
-  const [status, setStatus] = useState('');
-  const [gameCoin, setGameCoin] = useState(0);
-  const [points, setPoints] = useState(0);
-  const [cooldown, setCooldown] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const { client, connectWallet } = useWallet();
+  const wallet = client?.account?.address;
+  const [number, setNumber] = useState("");
+  const [isWinner, setIsWinner] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const { write } = useContractWrite({
-    address: CONTRACT_ADDRESS,
-    abi: ABI,
-    functionName: 'playGame',
-  });
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNumber(event.target.value);
+  };
 
-  const fetchStatus = useCallback(async () => {
-    if (!address) return;
-    try {
-      const { gameCoin, points } = await getUserStatus(address);
-      const cooldownLeft = await getCooldownLeft(address);
-      setGameCoin(Number(gameCoin));
-      setPoints(Number(points));
-      setCooldown(Number(cooldownLeft));
-    } catch (err) {
-      console.error('Failed to fetch status:', err);
+  const handleGuess = async () => {
+    if (!wallet) {
+      alert("Please connect your wallet first.");
+      return;
     }
-  }, [address]);
 
-  useEffect(() => {
-    if (address) fetchStatus();
-  }, [address, fetchStatus]);
+    const num = parseInt(number);
+    if (isNaN(num) || num < 1 || num > 10) {
+      alert("Please enter a number between 1 and 10.");
+      return;
+    }
 
-  const play = async () => {
+    setIsPlaying(true);
     try {
-      setLoading(true);
-      setStatus('Playing...');
-      await write?.();
-      setStatus('Success! 🎉');
+      const res: PlayResult = await playLuckyNumber(num);
+      if (res.success) {
+        setIsWinner(true);
+        setStatus("Played");
+      } else {
+        setIsWinner(false);
+        setStatus("Played");
+      }
     } catch (error) {
-      console.error(error);
-      setStatus('Failed to play');
+      console.error("Error playing lucky number:", error);
+      alert("Transaction failed. Please try again.");
     } finally {
-      await fetchStatus();
-      setLoading(false);
+      setIsPlaying(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6">
-      <ConnectButton />
-      <div className="mt-8 text-center">
-        <h1 className="text-2xl font-bold mb-2">🎲 Somnia Lucky Draw</h1>
-        {address && (
-          <>
-            <p className="mb-2">Wallet: {address}</p>
-            <p className="mb-2">Game Coin: {gameCoin}</p>
-            <p className="mb-2">Points: {points}</p>
-            <p className="mb-4">
-              {cooldown > 0
-                ? `⏳ Cooldown: ${cooldown} seconds left`
-                : '✅ Ready to play'}
-            </p>
-            <button
-              onClick={play}
-              disabled={cooldown > 0 || loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded disabled:bg-gray-400"
-            >
-              {loading ? 'Playing...' : 'Play Now'}
-            </button>
-            <p className="mt-4">{status}</p>
-          </>
-        )}
-      </div>
-    </main>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
+      <Image
+        src="/somnia-logo.png"
+        alt="Somnia Logo"
+        width={96}
+        height={96}
+        className="mb-4 rounded-full shadow-lg"
+      />
+      <h1 className="text-4xl font-bold text-gray-800 mb-2">Somnia Lucky Draw</h1>
+      <p className="text-gray-600 mb-6">Guess a number between 1 and 10</p>
+
+      <input
+        type="number"
+        value={number}
+        onChange={handleInputChange}
+        className="border rounded px-3 py-2 mb-4 w-48 text-center"
+        placeholder="Enter number"
+        min="1"
+        max="10"
+      />
+      <button
+        onClick={handleGuess}
+        disabled={isPlaying}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 mb-4"
+      >
+        {isPlaying ? "Checking..." : "Play"}
+      </button>
+
+      {!wallet && (
+        <button
+          onClick={connectWallet}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-4"
+        >
+          Connect Wallet
+        </button>
+      )}
+
+      {status && <p className="text-gray-700">Status: {status}</p>}
+      {isWinner === true && <p className="text-green-600 font-semibold">🎉 You won!</p>}
+      {isWinner === false && <p className="text-red-600 font-semibold">❌ Try again!</p>}
+    </div>
   );
 }
+

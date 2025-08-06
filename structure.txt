@@ -1,0 +1,60 @@
+.
+├── LICENSE
+├── README.md
+├── artifacts
+│   ├── @openzeppelin
+│   │   └── contracts
+│   ├── build-info
+│   │   ├── 13541a31d18b5890a453e75199b5290b.json
+│   │   └── 99e181c6940e1f442d944df86f58d036.json
+│   └── contracts
+│       ├── GameCoin.sol
+│       └── LuckyNumber.sol
+├── cache
+│   └── solidity-files-cache.json
+├── components
+│   └── Home.tsx
+├── constants
+│   ├── GameCoin.json
+│   ├── LuckyNumber.json
+│   ├── addresses.ts
+│   └── config.js
+├── contracts
+│   ├── GameCoin.sol
+│   └── LuckyNumber.sol
+├── eslint.config.mjs
+├── frontend
+│   ├── LICENSE
+│   └── README.md
+├── lib
+│   ├── contract.ts
+│   ├── mockContract.ts
+│   ├── wagmi.ts
+│   └── wallet.ts
+├── next-env.d.ts
+├── next.config.js
+├── package-lock.json
+├── package.json
+├── pages
+│   ├── _app.tsx
+│   ├── _document.tsx
+│   ├── api
+│   │   └── hello.ts
+│   └── index.tsx
+├── postcss.config.mjs
+├── public
+│   ├── favicon.ico
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── somnia-logo.png
+│   ├── vercel.svg
+│   └── window.svg
+├── structure.txt
+├── styles
+│   ├── globals.css
+│   └── styles
+│       └── globals.css
+└── tsconfig.json
+
+19 directories, 39 files
